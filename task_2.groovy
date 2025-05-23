@@ -2,10 +2,10 @@ pipeline {
     agent any
 
     stages {
-        stage('Checkout') {
+        stage('Clone and Verify') {
             steps {
-                deleteDir() // Clean old workspace files
-                git branch: 'main', url: 'https://github.com/atharvamavle/8.2CDevSecOps.git'
+                git url: 'https://github.com/atharvamavle/8.2CDevSecOps.git', branch: 'main'
+                sh 'git status' // Verify Git repo is properly cloned
             }
         }
 
