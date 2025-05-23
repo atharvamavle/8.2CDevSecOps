@@ -1,10 +1,11 @@
 pipeline {
     agent any
 
-    stage('Checkout') {
-        steps {
-            deleteDir() // Clean old workspace files
-            git branch: 'main', url: 'https://github.com/atharvamavle/8.2CDevSecOps.git'
+    stages {
+        stage('Checkout') {
+            steps {
+                deleteDir() // Clean old workspace files
+                git branch: 'main', url: 'https://github.com/atharvamavle/8.2CDevSecOps.git'
             }
         }
 
@@ -16,19 +17,19 @@ pipeline {
 
         stage('Run Tests') {
             steps {
-                sh 'npm test || true' // Allows pipeline to continue despite test failures
+                sh 'npm test || true' // Continue even if tests fail
             }
         }
 
         stage('Generate Coverage Report') {
             steps {
-                sh 'npm run coverage || true' // Ensure coverage report exists
+                sh 'npm run coverage || true' // Skip failure
             }
         }
 
         stage('NPM Audit (Security Scan)') {
             steps {
-                sh 'npm audit || true' // This will show known CVEs in the output
+                sh 'npm audit || true' // Do not block on audit warnings
             }
         }
     }
