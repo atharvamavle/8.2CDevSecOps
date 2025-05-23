@@ -1,10 +1,10 @@
 pipeline {
     agent any
 
-    stages {
-        stage('Checkout') {
-            steps {
-                git branch: 'main', url: 'https://github.com/atharvamavle/8.2CDevSecOps.git'
+    stage('Checkout') {
+        steps {
+            deleteDir() // Clean old workspace files
+            git branch: 'main', url: 'https://github.com/atharvamavle/8.2CDevSecOps.git'
             }
         }
 
