@@ -2,10 +2,9 @@ pipeline {
     agent any
 
     stages {
-        stage('Clone and Verify') {
+        stage('Checkout') {
             steps {
-                git url: 'https://github.com/atharvamavle/8.2CDevSecOps.git', branch: 'main'
-                sh 'git status' // Verify Git repo is properly cloned
+                git branch: 'main', url: 'https://github.com/atharvamavle/8.2CDevSecOps.git'
             }
         }
 
@@ -17,19 +16,22 @@ pipeline {
 
         stage('Run Tests') {
             steps {
-                sh 'npm test || true' // Continue even if tests fail
+                // Run tests but allow pipeline to continue on failure
+                sh 'npm test || true'
             }
         }
 
         stage('Generate Coverage Report') {
             steps {
-                sh 'npm run coverage || true' // Skip failure
+                // Run coverage script (e.g., nyc or jest), continue even if it fails
+                sh 'npm run coverage || true'
             }
         }
 
         stage('NPM Audit (Security Scan)') {
             steps {
-                sh 'npm audit || true' // Do not block on audit warnings
+                // Scan for vulnerabilities and continue even if issues are found
+                sh 'npm audit || true'
             }
         }
     }
