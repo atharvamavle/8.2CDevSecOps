@@ -23,20 +23,26 @@ pipeline {
                 script {
                     try {
                         sh 'npm test | tee test.log'
-                        currentBuild.result = 'SUCCESS'
-                    } catch (e) {
+                    } catch (err) {
                         currentBuild.result = 'FAILURE'
-                        throw e
+                        throw err
                     }
                 }
             }
             post {
                 always {
-                    mail(
-                        to: "${RECIPIENTS}",
-                        subject: "Run Tests Stage - ${currentBuild.currentResult}",
-                        body: "The 'Run Tests' stage completed with status: ${currentBuild.currentResult}. Check Jenkins workspace for logs."
-                    )
+                    script {
+                        def status = currentBuild.result ?: 'SUCCESS'
+                        def buildUrl = env.BUILD_URL
+                        def body = """The Run Tests stage completed with status: ${status}.
+
+Log file: ${buildUrl}artifact/test.log
+Console output: ${buildUrl}console
+"""
+                        mail to: "${env.RECIPIENTS}",
+                             subject: "Run Tests Stage - ${status}",
+                             body: body
+                    }
                 }
             }
         }
@@ -52,95 +58,34 @@ pipeline {
                 script {
                     try {
                         sh 'npm audit | tee audit.log'
-                        currentBuild.result = 'SUCCESS'
-                    } catch (e) {
+                    } catch (err) {
                         currentBuild.result = 'FAILURE'
-                        throw e
+                        throw err
                     }
                 }
             }
             post {
                 always {
-                    mail(
-                        to: "${RECIPIENTS}",
-                        subject: "Security Scan Stage - ${currentBuild.currentResult}",
-                        body: "The 'NPM Audit' stage completed with status: ${currentBuild.currentResult}. Check Jenkins workspace for audit results."
-                    )
+                    script {
+                        def status = currentBuild.result ?: 'SUCCESS'
+                        def buildUrl = env.BUILD_URL
+                        def body = """The Security Scan stage completed with status: ${status}.
+
+Log file: ${buildUrl}artifact/audit.log
+Console output: ${buildUrl}console
+"""
+                        mail to: "${env.RECIPIENTS}",
+                             subject: "Security Scan Stage - ${status}",
+                             body: body
+                    }
                 }
             }
         }
     }
-}
-pipeline {
-    agent any
 
-    environment {
-        RECIPIENTS = 'amavale34@gmail.com'
-    }
-
-    stages {
-        stage('Checkout') {
-            steps {
-                git branch: 'main', url: 'https://github.com/atharvamavle/8.2CDevSecOps.git'
-            }
-        }
-
-        stage('Install Dependencies') {
-            steps {
-                sh 'npm install'
-            }
-        }
-
-        stage('Run Tests') {
-            steps {
-                script {
-                    try {
-                        sh 'npm test | tee test.log'
-                        currentBuild.result = 'SUCCESS'
-                    } catch (e) {
-                        currentBuild.result = 'FAILURE'
-                        throw e
-                    }
-                }
-            }
-            post {
-                always {
-                    mail(
-                        to: "${RECIPIENTS}",
-                        subject: "Run Tests Stage - ${currentBuild.currentResult}",
-                        body: "The 'Run Tests' stage completed with status: ${currentBuild.currentResult}. Check Jenkins workspace for logs."
-                    )
-                }
-            }
-        }
-
-        stage('Generate Coverage Report') {
-            steps {
-                sh 'npm run coverage || true'
-            }
-        }
-
-        stage('NPM Audit (Security Scan)') {
-            steps {
-                script {
-                    try {
-                        sh 'npm audit | tee audit.log'
-                        currentBuild.result = 'SUCCESS'
-                    } catch (e) {
-                        currentBuild.result = 'FAILURE'
-                        throw e
-                    }
-                }
-            }
-            post {
-                always {
-                    mail(
-                        to: "${RECIPIENTS}",
-                        subject: "Security Scan Stage - ${currentBuild.currentResult}",
-                        body: "The 'NPM Audit' stage completed with status: ${currentBuild.currentResult}. Check Jenkins workspace for audit results."
-                    )
-                }
-            }
+    post {
+        always {
+            archiveArtifacts artifacts: '*.log', fingerprint: true
         }
     }
 }
